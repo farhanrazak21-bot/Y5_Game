@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Y5 Interactive Number Classification Game</title>
+  <style>
+    :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#94a3b8;--accent:#22c55e;--amber:#f59e0b;--err:#ef4444}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+    header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px}
+    h1{margin:0;font-size:20px}
+    .sub{color:var(--muted);font-size:13px}
+    .wrap{max-width:1100px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+    @media(min-width:980px){.wrap{grid-template-columns:1.2fr .8fr}}
+    .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    .tab.active{border-color:var(--accent);box-shadow:0 0 0 2px #14532d inset}
+    .title{font-weight:700;margin:0 0 8px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .muted{color:var(--muted)}
+    button{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+    button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+    input,select{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{padding:8px 10px;border:1px solid #2a3646;border-radius:999px;background:var(--panel);cursor:grab}
+    .dropzone{min-height:90px;border:2px dashed #334155;border-radius:14px;padding:10px}
+    .drop-ok{outline:2px solid var(--accent)}
+    .wrong{outline:2px solid var(--err)}
+    .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+    .ok{color:var(--accent)}
+    .err{color:var(--err)}
+    .grid{display:grid;gap:10px}
+    .board{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+    .cell{aspect-ratio:1/1;border:1px solid #253042;border-radius:6px;background:#0b1220}
+    .badge{border:1px solid #243042;border-radius:999px;padding:6px 10px;background:var(--panel);color:#cbd5e1}
+    .path{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:10px}
+    .tile{border:1px solid #243042;background:var(--panel);border-radius:10px;padding:8px;text-align:center}
+    .goal{border-color:var(--amber)}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Y5 Interactive Number Classification Game</h1>
+    <div class="sub">Prime & Composite • Divisible by 4/8 • Square Numbers • Classification Challenge</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="prime">1) Prime & Composite Lab</button>
+      <button class="tab" data-tab="div">2) Factors & Divisibility (4 & 8)</button>
+      <button class="tab" data-tab="square">3) Square Builder</button>
+      <button class="tab" data-tab="class">4) Classification Challenge</button>
+      <button class="tab" data-tab="quiz">5) Quick Quiz</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 class="title">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 class="title">Teacher Prompts & Value Links</h3>
+      <ul class="muted" style="margin-left:18px">
+        <li>Begin with a short dua for beneficial knowledge.</li>
+        <li><b>ISIC5:</b> Cause → consequence: rules create order in numbers (like natural laws in creation).</li>
+        <li><b>ECOL7:</b> Classification: numbers ↔ living things (kingdoms, traits).</li>
+        <li>Prime basket (indivisible) vs grape cluster (composite) analogy.</li>
+        <li>Recycling bins for 4s & 8s; factor trees to explain why.</li>
+        <li>Squares show symmetry & balance; build arrays to see the pattern.</li>
+      </ul>
+      <div class="result">Score: <b id="score">0</b> · Attempts: <b id="tries">0</b></div>
+    </aside>
+  </div>
+
+  <script>
+    const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+    let SCORE=0, TRIES=0; const add=(n)=>{SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES};
+
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+      const id=t.dataset.tab; if(id==='prime') renderPrime(); if(id==='div') renderDiv(); if(id==='square') renderSquare(); if(id==='class') renderClass(); if(id==='quiz') renderQuiz(); }));
+
+    // Helpers
+    const isPrime=(n)=>{ if(n<2) return false; if(n%2===0) return n===2; for(let i=3;i*i<=n;i+=2){ if(n%i===0) return false;} return true; };
+    const divisibleBy4=(n)=>{ return n%4===0; };
+    const divisibleBy8=(n)=>{ return n%8===0; };
+
+    // 1) PRIME & COMPOSITE LAB (drag and drop numbers)
+    function renderPrime(){
+      const v=$('#view'); v.innerHTML='';
+      let max=30; const makeNums=()=>Array.from({length:max},(_,i)=>i+1);
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><label>Range</label><select id="range"><option value="30">1–30 (core)</option><option value="100">1–100 (extension)</option></select>
+          <button id="regen">Generate</button> <button id="check" class="primary">Check</button> <button id="hint" class="warn">Hint</button></div>
+        <div class="row">
+          <div style="flex:1">
+            <div class="title">Numbers</div>
+            <div id="chips" class="chips"></div>
+          </div>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div>
+            <div class="title">Prime</div>
+            <div id="primeDrop" class="dropzone"></div>
+          </div>
+          <div>
+            <div class="title">Composite</div>
+            <div id="compDrop" class="dropzone"></div>
+          </div>
+        </div>
+        <div class="result" id="out"></div>
+        <div class="result muted">Reflection: "Allah creates order in both numbers and life." Link to classification in nature (mammals, reptiles, plants, fungi).</div>
+      `; v.appendChild(ui);
+      const renderChips=()=>{
+        const box=$('#chips'); box.innerHTML=''; makeNums().forEach(n=>{ const c=document.createElement('div'); c.className='chip'; c.textContent=n; c.draggable=true; c.id='n_'+n; c.dataset.n=n;
+          c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',c.id)); box.appendChild(c); });
+      };
+      const makeDrop=(el)=>{ el.addEventListener('dragover',e=>{e.preventDefault(); el.classList.add('drop-ok')}); el.addEventListener('dragleave',()=>el.classList.remove('drop-ok')); el.addEventListener('drop',e=>{e.preventDefault(); el.classList.remove('drop-ok'); const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) el.appendChild(chip); }); };
+      makeDrop($('#primeDrop')); makeDrop($('#compDrop'));
+      renderChips();
+      $('#regen').onclick=()=>{ max=Number($('#range').value); renderPrime(); };
+      $('#hint').onclick=()=>{ $('#out').innerHTML='Hint: 1 is neither prime nor composite. Even numbers >2 are composite. Check smallest divisor tests (2,3,5,7).'; };
+      $('#check').onclick=()=>{
+        let ok=true, errors=[]; const placedPrime=$$('#primeDrop .chip').map(x=>Number(x.dataset.n)); const placedComp=$$('#compDrop .chip').map(x=>Number(x.dataset.n));
+        const allPlaced=[...placedPrime,...placedComp]; const missing=makeNums().filter(n=>!allPlaced.includes(n));
+        placedPrime.forEach(n=>{ if(n===1 || !isPrime(n)) {ok=false; errors.push(n+' not prime');} });
+        placedComp.forEach(n=>{ if(n===1 || isPrime(n)) {ok=false; errors.push(n+' not composite');} });
+        if(missing.length) { ok=false; errors.push('Unsorted: '+missing.join(', ')); }
+        if(ok){ $('#out').innerHTML='<span class="ok">Perfect sorting! Create a prime list chart for extension.</span>'; add(4); }
+        else { $('#out').innerHTML='<span class="err">Check again.</span> '+errors.join(' · '); add(0);} }
+    }
+
+    // 2) FACTORS & DIVISIBILITY (bins for 4, 8, or neither + tester)
+    function renderDiv(){
+      const v=$('#view'); v.innerHTML='';
+      let pool=Array.from({length:30},()=>Math.floor(Math.random()*80)+1); // numbers 1–80
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="regen">New Set</button> <button id="check" class="primary">Check</button> <button id="hint" class="warn">Hint</button></div>
+        <div class="chips" id="chips"></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
+          <div><div class="title">Divisible by 4</div><div id="d4" class="dropzone"></div></div>
+          <div><div class="title">Divisible by 8</div><div id="d8" class="dropzone"></div></div>
+          <div><div class="title">Neither</div><div id="dn" class="dropzone"></div></div>
+        </div>
+        <div class="result" id="out"></div>
+        <div class="row" style="margin-top:10px"><input id="testn" placeholder="Test any number"/><button id="testbtn">Test divisibility</button><div id="testout" class="badge"></div></div>
+        <div class="result muted">Eco link: "Factors group numbers like traits group animals into kingdoms" (ECOL7). Build factor trees to justify why.</div>
+      `; v.appendChild(ui);
+      const renderChips=()=>{ const box=$('#chips'); box.innerHTML=''; pool.forEach(n=>{ const c=document.createElement('div'); c.className='chip'; c.textContent=n; c.id='m_'+n; c.draggable=true; c.dataset.n=n; c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',c.id)); box.appendChild(c); }); };
+      const makeDrop=(el)=>{ el.addEventListener('dragover',e=>{e.preventDefault(); el.classList.add('drop-ok')}); el.addEventListener('dragleave',()=>el.classList.remove('drop-ok')); el.addEventListener('drop',e=>{e.preventDefault(); el.classList.remove('drop-ok'); const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) el.appendChild(chip); }); };
+      [$('#d4'),$('#d8'),$('#dn')].forEach(makeDrop); renderChips();
+      $('#regen').onclick=renderDiv;
+      $('#hint').onclick=()=>{ $('#out').innerHTML='Hint: Divisible by 4 → last two digits form a multiple of 4. Divisible by 8 → last three digits form a multiple of 8.'; };
+      $('#check').onclick=()=>{
+        let ok=true, errors=[]; const get=(sel)=>$$(`${sel} .chip`).map(x=>Number(x.dataset.n));
+        const g4=get('#d4'), g8=get('#d8'), gn=get('#dn');
+        g4.forEach(n=>{ if(!divisibleBy4(n) || divisibleBy8(n)) { ok=false; errors.push(n+' wrong in /4'); } });
+        g8.forEach(n=>{ if(!divisibleBy8(n)) { ok=false; errors.push(n+' not /8'); } });
+        const all=[...g4,...g8,...gn]; if(pool.some(n=>!all.includes(n))) { ok=false; errors.push('Unsorted numbers remain.'); }
+        if(ok){ $('#out').innerHTML='<span class="ok">Great classification!</span>'; add(4);} else { $('#out').innerHTML='<span class="err">Check again.</span> '+errors.join(' · '); add(0);} };
+      $('#testbtn').onclick=()=>{ const x=Number($('#testn').value); if(!Number.isFinite(x)){ $('#testout').textContent='Enter a number'; return;} const by8=divisibleBy8(x), by4=divisibleBy4(x); $('#testout').textContent = by8? 'Divisible by 8 (also by 4)': by4? 'Divisible by 4 only':'Not divisible by 4/8'; };
+    }
+
+    // 3) SQUARE BUILDER (array visualiser + identify squares)
+    function renderSquare(){
+      const v=$('#view'); v.innerHTML=''; let n=3; const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><label>Array size</label><input id="sz" type="number" min="1" max="15" value="3" style="width:90px"/> <button id="build" class="primary">Build Array</button> <button id="challenge">New Challenge</button></div>
+        <div id="grid" class="board" style="grid-template-columns:repeat(3,1fr)"></div>
+        <div class="result" id="info"></div>
+        <div class="row" style="margin-top:10px"><div class="title">Identify Squares (1–100)</div><input id="pick" placeholder="Enter 5 numbers"/> <button id="check" class="primary">Check</button></div>
+        <div class="result" id="out"></div>
+        <div class="result muted">Squares are a special group showing symmetry & balance in creation. Build arrays to see n×n patterns.</div>
+      `; v.appendChild(ui);
+      const draw=(k)=>{ const g=$('#grid'); g.innerHTML=''; g.style.gridTemplateColumns=`repeat(${k},1fr)`; for(let i=0;i<k*k;i++){ const c=document.createElement('div'); c.className='cell'; g.appendChild(c);} $('#info').innerHTML=`Array: <b>${k}×${k}</b> → cells: <b>${k*k}</b> (${k}²)`; };
+      $('#build').onclick=()=>{ const k=Math.max(1,Math.min(15,Number($('#sz').value)||3)); draw(k); };
+      $('#challenge').onclick=()=>{ const k=Math.floor(Math.random()*10)+1; $('#sz').value=k; draw(k); };
+      const squares=new Set([1,4,9,16,25,36,49,64,81,100]);
+      $('#check').onclick=()=>{ const vals=($('#pick').value||'').split(/[,\s]+/).filter(Boolean).map(x=>Number(x)); if(vals.length===0){ $('#out').innerHTML='<span class="err">Enter some numbers.</span>'; return; } const res=vals.map(x=> squares.has(x)? x+': ✓ square' : x+': × not square').join(' · '); const score = vals.reduce((s,x)=> s + (squares.has(x)?1:0),0); add(score); $('#out').innerHTML=res; };
+      draw(n);
+    }
+
+    // 4) CLASSIFICATION CHALLENGE (path game with mixed prompts)
+    function renderClass(){
+      const v=$('#view'); v.innerHTML=''; let pos=0; const total=18; const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><div class="title">Classification Challenge</div><span class="badge">Answer to move along the path</span> <button id="reset">Reset</button></div>
+        <div class="path" id="path"></div>
+        <div class="row"><input id="ans" placeholder="Type your answer"/> <button id="go" class="primary">Submit</button></div>
+        <div class="result" id="out"></div>
+        <div class="muted">Cause & consequence in math mirrors order in nature (ISIC5 • ECOL7).</div>
+      `; v.appendChild(ui);
+      const path=$('#path'); for(let i=0;i<total;i++){ const t=document.createElement('div'); t.className='tile'+(i===total-1?' goal':''); t.textContent=i===total-1?'Goal ⭐':'Step '+(i+1); path.appendChild(t);} const highlight=()=>{ $$('#path .tile').forEach((t,i)=> t.style.outline = i===pos? '2px solid var(--accent)': 'none'); }; highlight();
+      const tasks=[
+        {q:'Smallest prime?', a:'2'},
+        {q:'Is 1 prime or composite?', a:'neither'},
+        {q:'Divisible by 4? 124', a:'yes'},
+        {q:'Divisible by 8? 96', a:'yes'},
+        {q:'Next square after 36', a:'49'},
+        {q:'Prime or composite: 51', a:'composite'},
+        {q:'Square? 25', a:'yes'},
+        {q:'Multiple of 8? 72', a:'yes'},
+        {q:'Prime less than 10 that is even', a:'2'},
+        {q:'Square ≤ 100 that is even', a:'4'},
+      ]; let idx=0; const norm=s=>String(s).toLowerCase().replace(/\s+/g,' ').trim();
+      const ask=()=>{ $('#out').innerHTML = 'Task: <b>'+tasks[idx].q+'</b>'; $('#ans').value=''; $('#ans').focus(); };
+      const move=(n)=>{ pos=Math.min(total-1,pos+n); highlight(); if(pos===total-1){ $('#out').innerHTML+='<div class="ok">Great classification! You reached the goal.</div>'; }}
+      $('#go').onclick=()=>{ const ok = norm($('#ans').value)===norm(tasks[idx].a); if(ok){ add(3); $('#out').innerHTML='<span class="ok">Correct! Move 2 steps.</span>'; move(2);} else { add(0); $('#out').innerHTML='<span class="err">Not quite.</span> Answer: <b>'+tasks[idx].a+'</b>. Move 1 step.'; move(1);} idx=(idx+1)%tasks.length; setTimeout(ask,600); };
+      $('#reset').onclick=renderClass; ask();
+    }
+
+    // 5) QUICK QUIZ
+    function renderQuiz(){
+      const v=$('#view'); v.innerHTML=''; const qs=[
+        {q:'Is 29 prime or composite?', a:'prime'},
+        {q:'Is 48 divisible by 4?', a:'yes'},
+        {q:'Thousandths not used here: Is 1 a prime?', a:'no'},
+        {q:'Which are squares? 36, 48, 49, 50 (type: 36 49)', a:'36 49'},
+        {q:'Divisible by 8? 1,256 (type yes/no)', a:'yes'},
+      ]; let i=0, ok=0; const ui=document.createElement('div');
+      ui.innerHTML=`<div class="big" id="qq"></div>
+        <div class="row"><input id="qa" placeholder="Answer"/> <button id="qnext" class="primary">Submit</button></div>
+        <div class="result" id="qo"></div>
+        <div class="muted">Close with short reflection & dua for guidance and gratitude.</div>`; v.appendChild(ui);
+      const norm=s=>String(s).toLowerCase().replace(/\s+/g,' ').trim();
+      const show=()=>{ $('#qq').innerHTML='Q'+(i+1)+'. '+qs[i].q; $('#qa').value=''; $('#qa').focus(); $('#qo').textContent=''; };
+      $('#qnext').onclick=()=>{ const want=qs[i].a; const got=$('#qa').value; if(norm(got)===norm(want)){ ok++; add(2); $('#qo').innerHTML='<span class="ok">Correct.</span>'; } else { add(0); $('#qo').innerHTML='<span class="err">Answer:</span> <b>'+want+'</b>'; } i++; if(i<qs.length){ setTimeout(show,600)} else { $('#qq').innerHTML='Finished. Score: <b>'+ok+'/'+qs.length+'</b>'; $('#qa').disabled=true; $('#qnext').disabled=true; }};
+      show();
+    }
+
+    // boot
+    renderPrime();
+  </script>
+</body>
+</html>
