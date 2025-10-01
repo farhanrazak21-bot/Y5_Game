@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Y5 Science Interactive — Plants</title>
+  <style>
+    :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#9aa4b2;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#3b82f6}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+    header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px;z-index:10}
+    h1{margin:0;font-size:20px}
+    .sub{color:var(--muted);font-size:13px}
+    .wrap{max-width:1200px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+    @media(min-width:1000px){.wrap{grid-template-columns:1.4fr .6fr}}
+    .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    .tab.active{border-color:var(--ok);box-shadow:0 0 0 2px #14532d inset}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .col{display:flex;flex-direction:column;gap:8px}
+    button{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+    button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+    button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+    input,select,textarea{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px}
+    textarea{min-height:90px}
+    .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+    .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted)}
+    .grid{display:grid;gap:12px}
+    .slot{border:2px dashed #334155;border-radius:12px;min-height:52px;padding:8px}
+    .chip{padding:10px 12px;border:1px solid #2a3646;border-radius:999px;background:#0b1220;display:inline-block;cursor:grab;margin:4px}
+    .pill{padding:6px 10px;border:1px solid #253042;border-radius:999px;background:#0b1220}
+    .panel{background:#0b1220;border:1px solid #253042;border-radius:12px;padding:10px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    svg{max-width:100%}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Y5 Science Interactive — Flowering vs Non‑Flowering • Flower Parts • Life Cycle</h1>
+    <div class="sub">Lesson 1–3 activities · Values: Allah’s wise design in plants • Purpose in creation • Stewardship of nature</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="classify">1) Classify: Flowering / Non‑Flowering</button>
+      <button class="tab" data-tab="parts">2) Parts of a Flower (Label & Functions)</button>
+      <button class="tab" data-tab="cycle">3) Life Cycle Sequencer</button>
+      <button class="tab" data-tab="quiz">4) Quick Quiz & Reflection</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 style="margin:0 0 8px">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 style="margin:0 0 8px">Teacher Prompts & Value Links</h3>
+      <div class="panel">
+        <ul class="muted" style="margin-left:18px">
+          <li>Ask: What are <b>functions</b> of stem, leaves, roots, flowers?</li>
+          <li>Not all plants have flowers — compare groups fairly (similarities & differences).</li>
+          <li>Value link: “Each part has a purpose from Allah; studying plants shows His wisdom.”</li>
+          <li>Fair work: share roles in groups; justify sorting decisions.</li>
+        </ul>
+      </div>
+      <div class="result score"><div class="panel">Score<br><b id="score">0</b></div><div class="panel">Attempts<br><b id="tries">0</b></div><div class="panel">Stars<br><b id="stars">★☆☆</b></div></div>
+    </aside>
+  </div>
+
+  <script>
+    const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+    let SCORE=0, TRIES=0; const add=(n)=>{SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES; const star = SCORE>=18? '★★★': SCORE>=12? '★★☆': SCORE>=6? '★☆☆':'☆☆☆'; $('#stars').textContent=star; };
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const id=t.dataset.tab; if(id==='classify') renderClassify(); if(id==='parts') renderParts(); if(id==='cycle') renderCycle(); if(id==='quiz') renderQuiz(); }));
+
+    // ============= 1) CLASSIFY =============
+    function renderClassify(){
+      const v=$('#view'); v.innerHTML='';
+      const plants=[
+        {name:'Hibiscus 🌺', type:'flowering', features:'broad leaves, colourful petals'},
+        {name:'Mango Tree 🥭', type:'flowering', features:'flowers then fruit'},
+        {name:'Pine Tree 🌲', type:'non', features:'cones, needle leaves'},
+        {name:'Fern 🌿', type:'non', features:'fronds, spores under leaves'},
+        {name:'Lotus 🌸', type:'flowering', features:'large petals, aquatic'},
+        {name:'Moss 🟩', type:'non', features:'no true flowers, damp places'},
+        {name:'Sunflower 🌻', type:'flowering', features:'big head of tiny flowers'},
+        {name:'Cycad 🌴', type:'non', features:'cones, thick trunk'}
+      ];
+      const picks = plants.sort(()=>0.5-Math.random()).slice(0,6);
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="regen" class="primary">New Cards</button> <button id="check" class="primary">Check Sorting</button> <button id="hint" class="warn">Hint</button></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          <div>
+            <div class="muted">Plant Cards (drag to the correct group)</div>
+            <div id="cards" class="panel"></div>
+          </div>
+          <div class="two">
+            <div>
+              <div class="muted">Flowering</div>
+              <div id="dzF" class="slot"></div>
+            </div>
+            <div>
+              <div class="muted">Non‑flowering</div>
+              <div id="dzN" class="slot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="result" id="out"></div>
+        <div class="panel muted">Write one similarity & one difference in your book or here:<br/>
+          <textarea id="notes" placeholder="Similarity: …  Difference: …"></textarea>
+        </div>
+      `; v.appendChild(ui);
+      const draw=()=>{ const C=$('#cards'); C.innerHTML=''; picks.forEach((p,i)=>{ const el=document.createElement('div'); el.className='chip'; el.textContent=p.name; el.draggable=true; el.dataset.type=p.type; el.title=p.features; el.id='p_'+i; el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.id)); C.appendChild(el); }); };
+      const drop=(el)=>{ el.addEventListener('dragover',e=>{e.preventDefault(); el.style.outline='2px solid var(--ok)'}); el.addEventListener('dragleave',()=>el.style.outline='none'); el.addEventListener('drop',e=>{e.preventDefault(); el.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip) el.appendChild(chip); }); };
+      drop($('#dzF')); drop($('#dzN'));
+      $('#regen').onclick=draw; draw();
+      $('#hint').onclick=()=>{ $('#out').innerHTML='Flowering plants make <b>flowers</b> (often fruits/seeds). Non‑flowering (ferns, mosses, conifers) use cones or <b>spores</b>.' };
+      $('#check').onclick=()=>{ const get=(sel)=>$$(`${sel} .chip`).map(x=>x.textContent); const F=$$('#dzF .chip'), N=$$('#dzN .chip'); let ok=true; const errs=[]; F.forEach(x=>{ if(x.dataset.type!=='flowering'){ ok=false; errs.push(x.textContent+' → not flowering'); } }); N.forEach(x=>{ if(x.dataset.type!=='non'){ ok=false; errs.push(x.textContent+' → not non‑flowering'); } }); if(F.length+N.length!==picks.length){ ok=false; errs.push('Some cards are unsorted'); } if(ok){ add(4); $('#out').innerHTML='<span class="ok">Great classification! Now write one similarity & difference.</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Check again:</span> '+errs.join(' · '); }
+      };
+    }
+
+    // ============= 2) PARTS OF A FLOWER =============
+    function renderParts(){
+      const v=$('#view'); v.innerHTML='';
+      const labels=[
+        {id:'sepals', text:'Sepals (protect bud)'},
+        {id:'petals', text:'Petals (attract pollinators)'},
+        {id:'stamen', text:'Stamen (male part)'},
+        {id:'anther', text:'Anther (makes pollen)'},
+        {id:'filament', text:'Filament (holds anther)'},
+        {id:'pistil', text:'Pistil/Carpel (female part)'},
+        {id:'stigma', text:'Stigma (receives pollen)'},
+        {id:'ovary', text:'Ovary (contains ovules)'},
+        {id:'ovules', text:'Ovules (become seeds)'}
+      ];
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="two">
+          <div>
+            <div class="muted">Drag labels to the correct targets</div>
+            <div id="labBar"></div>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+              <div class="slot" data-id="petals">Petals</div>
+              <div class="slot" data-id="sepals">Sepals</div>
+              <div class="slot" data-id="stamen">Stamen</div>
+              <div class="slot" data-id="anther">Anther</div>
+              <div class="slot" data-id="filament">Filament</div>
+              <div class="slot" data-id="pistil">Pistil/Carpel</div>
+              <div class="slot" data-id="stigma">Stigma</div>
+              <div class="slot" data-id="ovary">Ovary</div>
+              <div class="slot" data-id="ovules">Ovules</div>
+            </div>
+            <div class="row" style="margin-top:8px"><button id="checkLab" class="primary">Check Labels</button> <button id="reset" class="warn">Reset</button></div>
+            <div class="result" id="labOut"></div>
+          </div>
+          <div>
+            <div class="muted">Flower diagram (schematic)</div>
+            <svg viewBox="0 0 240 260" width="100%" style="background:#0b1220;border:1px solid #253042;border-radius:12px">
+              <ellipse cx="120" cy="120" rx="80" ry="60" fill="#1e293b" stroke="#22c55e"/>
+              <circle cx="120" cy="120" r="28" fill="#3b82f6"/>
+              <line x1="120" y1="148" x2="120" y2="220" stroke="#22c55e"/>
+              <circle cx="120" cy="95" r="6" fill="#fde047"/>
+              <circle cx="140" cy="105" r="5" fill="#fde047"/>
+              <circle cx="100" cy="105" r="5" fill="#fde047"/>
+              <rect x="112" y="220" width="16" height="30" fill="#14532d"/>
+              <text x="120" y="20" fill="#93c5fd" text-anchor="middle">Schematic only (not to scale)</text>
+            </svg>
+            <div class="panel muted" style="margin-top:8px">
+              Value link: “Every part has a purpose from Allah — reproduction needs both stamen and pistil.”
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:10px">
+          <b>Functions Quick-Check:</b>
+          <div class="row" style="margin-top:6px">
+            <select id="funcQ">
+              <option value="anther">Which part makes pollen?</option>
+              <option value="stigma">Which part receives pollen?</option>
+              <option value="ovary">Which part contains ovules?</option>
+              <option value="sepals">Which part protects the bud?</option>
+            </select>
+            <input id="funcA" placeholder="Type the part name"/>
+            <button id="funcCheck" class="primary">Check</button>
+          </div>
+          <div class="result" id="funcOut"></div>
+        </div>
+      `; v.appendChild(ui);
+      // labels
+      const bar=$('#labBar'); labels.sort(()=>0.5-Math.random()).forEach(l=>{ const el=document.createElement('div'); el.className='chip'; el.textContent=l.text; el.draggable=true; el.dataset.id=l.id; el.id='lab_'+l.id; el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.id)); bar.appendChild(el); });
+      $$('.slot').forEach(slot=>{ slot.addEventListener('dragover',e=>{e.preventDefault(); slot.style.outline='2px solid var(--ok)'}); slot.addEventListener('dragleave',()=>slot.style.outline='none'); slot.addEventListener('drop',e=>{e.preventDefault(); slot.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip){ slot.innerHTML=''; slot.appendChild(chip); } }); });
+      $('#checkLab').onclick=()=>{ let ok=true; const wrong=[]; $$('.slot').forEach(s=>{ const child=[...s.children].find(c=>c.classList && c.classList.contains('chip')); if(!child || child.dataset.id!==s.dataset.id){ ok=false; wrong.push(s.dataset.id); } }); if(ok){ add(5); $('#labOut').innerHTML='<span class="ok">Excellent labeling!</span>'; } else { add(0); $('#labOut').innerHTML='<span class="err">Fix these:</span> '+wrong.join(', '); } };
+      $('#reset').onclick=()=>renderParts();
+      $('#funcCheck').onclick=()=>{ const map={anther:'anther', stigma:'stigma', ovary:'ovary', sepals:'sepals'}; const want=$('#funcQ').value; const got=($('#funcA').value||'').toLowerCase().replace(/\s+.*/,''); if(got===map[want]){ add(2); $('#funcOut').innerHTML='<span class="ok">Correct!</span>'; } else { add(0); $('#funcOut').innerHTML='<span class="err">Answer:</span> <b>'+map[want]+'</b>'; } };
+    }
+
+    // ============= 3) LIFE CYCLE =============
+    function renderCycle(){
+      const v=$('#view'); v.innerHTML='';
+      const steps=[
+        {id:'seed', text:'Seed'},
+        {id:'germ', text:'Germination'},
+        {id:'seedling', text:'Seedling'},
+        {id:'mature', text:'Mature Plant'},
+        {id:'flower', text:'Flower'},
+        {id:'fruit', text:'Fruit with Seeds'}
+      ];
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="shuffle" class="primary">Shuffle Cards</button> <button id="check" class="primary">Check Order</button> <button id="hint" class="warn">Hint</button></div>
+        <div class="panel" id="cards"></div>
+        <div class="grid" style="grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px" id="line"></div>
+        <div class="result" id="out"></div>
+        <div class="panel muted">Why it matters: “Plants need clean soil, water, and sunlight to complete this cycle — we must protect the environment.”</div>
+      `; v.appendChild(ui);
+      const shuffled=[...steps].sort(()=>0.5-Math.random());
+      const C=$('#cards'); const L=$('#line');
+      function render(){ C.innerHTML=''; L.innerHTML=''; shuffled.forEach(s=>{ const el=document.createElement('div'); el.className='chip'; el.textContent=s.text; el.draggable=true; el.dataset.id=s.id; el.id='c_'+s.id; el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.id)); C.appendChild(el); }); for(let i=0;i<6;i++){ const slot=document.createElement('div'); slot.className='slot'; slot.dataset.pos=i; slot.textContent='Drop stage '+(i+1); slot.addEventListener('dragover',e=>{e.preventDefault(); slot.style.outline='2px solid var(--ok)'}); slot.addEventListener('dragleave',()=>slot.style.outline='none'); slot.addEventListener('drop',e=>{e.preventDefault(); slot.style.outline='none'; const id=e.dataTransfer.getData('text/plain'); const chip=document.getElementById(id); if(chip){ slot.innerHTML=''; slot.appendChild(chip); } }); L.appendChild(slot); } }
+      render();
+      $('#shuffle').onclick=()=>{ shuffled.sort(()=>0.5-Math.random()); render(); };
+      $('#hint').onclick=()=>{ $('#out').innerHTML='Order hint: <b>Seed → Germination → Seedling → Mature Plant → Flower → Fruit/Seeds</b>'; };
+      $('#check').onclick=()=>{ const want=['seed','germ','seedling','mature','flower','fruit']; const got=$$('#line .slot').map(s=>{ const c=[...s.children].find(x=>x.classList && x.classList.contains('chip')); return c? c.dataset.id : null; }); let ok=got.every((x,i)=>x===want[i]); if(ok){ add(5); $('#out').innerHTML='<span class="ok">Perfect sequence!</span>'; } else { add(0); const miss=want.map((w,i)=> (got[i]||'—')+'→'+w).join(' · '); $('#out').innerHTML='<span class="err">Recheck order.</span> '+miss; }
+      };
+    }
+
+    // ============= 4) QUIZ & REFLECTION =============
+    function renderQuiz(){
+      const v=$('#view'); v.innerHTML='';
+      const qs=[
+        {q:'Do all plants have flowers? (yes/no)', a:'no'},
+        {q:'Name one non‑flowering group (e.g., fern/moss/conifer).', a:'fern'},
+        {q:'Which part makes pollen?', a:'anther'},
+        {q:'Which part receives pollen?', a:'stigma'},
+        {q:'Put first stage: seed or flower?', a:'seed'},
+        {q:'Why protect plants and habitats? One reason:', a:'oxygen'}
+      ]; let i=0, ok=0;
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div id="q" style="font-size:22px;margin-bottom:8px"></div>
+        <div class="row"><input id="a" placeholder="Type answer"/> <button id="next" class="primary">Submit</button></div>
+        <div class="result" id="out"></div>
+        <div class="panel muted">Value reflection: “Every part and stage shows Allah’s design and purpose. Caring for plants is part of being a good khalifah.”</div>
+      `; v.appendChild(ui);
+      const norm=s=>String(s).toLowerCase().replace(/\s+/g,' ').trim();
+      function show(){ $('#q').textContent='Q'+(i+1)+'. '+qs[i].q; $('#a').value=''; $('#out').textContent=''; $('#a').focus(); }
+      $('#next').onclick=()=>{ const want=qs[i].a; const got=norm($('#a').value); if(got && (norm(want)===got || (Array.isArray(want)? want.map(norm).includes(got): got.includes(norm(want))))){ ok++; add(2); $('#out').innerHTML='<span class="ok">Correct.</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Sample answer:</span> <b>'+want+'</b>'; } i++; if(i<qs.length){ setTimeout(show,650);} else { $('#q').innerHTML='Finished. Score: '+ok+'/'+qs.length; $('#a').disabled=true; $('#next').disabled=true; } };
+      show();
+    }
+
+    // boot
+    renderClassify();
+  </script>
+</body>
+</html>
