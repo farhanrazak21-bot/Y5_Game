@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Y5 Math Interactive — Sequences & Patterns</title>
+<style>
+  :root{--bg:#0f172a;--panel:#0b1220;--card:#111827;--muted:#9aa4b2;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--blue:#38bdf8}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:#e5e7eb}
+  header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid #1f2937;padding:16px;z-index:10}
+  h1{margin:0;font-size:20px}
+  .sub{color:var(--muted);font-size:13px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .tab{background:var(--panel);border:1px solid #243042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+  .tab.active{border-color:var(--ok);box-shadow:0 0 0 2px #14532d inset}
+  .wrap{max-width:1200px;margin:16px auto;padding:0 16px;display:grid;gap:16px}
+  @media(min-width:1100px){.wrap{grid-template-columns:1.45fr .55fr}}
+  .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .panel{background:#0b1220;border:1px solid #253042;border-radius:12px;padding:10px}
+  .muted{color:var(--muted)} .ok{color:var(--ok)} .err{color:var(--err)}
+  button{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px 12px;cursor:pointer}
+  button.primary{background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#06210d}
+  button.warn{background:#1f1300;border:1px solid #6b4e00;color:#ffd166}
+  input,select,textarea{background:var(--panel);border:1px solid #253042;border-radius:10px;color:#e5e7eb;padding:10px}
+  .result{margin-top:10px;padding:10px;border-radius:10px;background:var(--panel);border:1px solid #1f2937}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+  .grid{display:grid;gap:12px}
+  .two{grid-template-columns:1fr 1fr}
+  .three{grid-template-columns:repeat(3,1fr)}
+  .numchip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #2a3646;border-radius:12px;background:#0b1220;margin:6px;cursor:grab}
+  .slot{border:2px dashed #334155;border-radius:12px;min-height:64px;padding:8px}
+  .numline{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .tick{width:40px;height:38px;border-radius:8px;border:1px solid #2a3646;display:flex;align-items:center;justify-content:center}
+  .tick.zero{border-color:#38bdf8;box-shadow:0 0 0 2px #0ea5e9 inset}
+  .thermo{height:220px;width:60px;background:#0b1220;border:1px solid #253042;border-radius:40px;position:relative;margin:8px}
+  .bulb{position:absolute;bottom:-10px;left:5px;width:50px;height:50px;background:linear-gradient(#ef4444,#fb7185);border-radius:50%}
+  .mercury{position:absolute;bottom:10px;left:18px;width:24px;height:0;background:linear-gradient(#ef4444,#fb7185);border-radius:12px}
+  .badge{font-size:12px;padding:2px 6px;border:1px solid #2a3646;border-radius:999px}
+  .big{font-size:22px}
+  .cell{width:48px;height:48px;border:1px solid #2a3646;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:2px}
+  .board{display:grid;grid-template-columns:repeat(10,48px);gap:2px}
+  .dot{width:14px;height:14px;border-radius:50%;background:#38bdf8;display:inline-block;margin:1px}
+  .section{border-top:1px dashed #2a3646;margin-top:10px;padding-top:10px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Y5 Math Interactive — Sequences & Patterns</h1>
+    <div class="sub">Counting steps & negatives • Linear sequences (nth-term) • Square & triangular numbers • Eco/Islamic links</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="count">1) 🌡️ Steps & Negatives</button>
+      <button class="tab" data-tab="linear">2) 🌿 Linear Sequences</button>
+      <button class="tab" data-tab="shapes">3) 🔷 Square & ▲ Triangular</button>
+      <button class="tab" data-tab="consolidate">4) 🧩 Consolidation</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" id="main">
+      <h2 style="margin:0 0 8px">Activity Panel</h2>
+      <div id="view"></div>
+    </section>
+
+    <aside class="card">
+      <h3 style="margin:0 0 8px">Teacher Prompts & Integration</h3>
+      <div class="panel">
+        <ul class="muted" style="margin-left:18px">
+          <li><b>Eco link:</b> weather cycles & growth patterns in ecosystems (ECOL1).</li>
+          <li><b>Islamic link:</b> Allah’s balance in seasons and creation; reflect with short duas.</li>
+          <li>Differentiation: colour number line, whole steps for support; include decimals for challenge.</li>
+        </ul>
+      </div>
+      <div class="result panel">Score: <b id="score">0</b> · Tries: <b id="tries">0</b> · Stars: <b id="stars">☆☆☆</b></div>
+    </aside>
+  </div>
+
+  <script>
+    const $=(s,el=document)=>el.querySelector(s); const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+    let SCORE=0, TRIES=0; const add=(n)=>{SCORE+=n; TRIES++; $('#score').textContent=SCORE; $('#tries').textContent=TRIES; $('#stars').textContent= SCORE>=36?'★★★':SCORE>=20?'★★☆':SCORE>=10?'★☆☆':'☆☆☆'; };
+    $$('.tab').forEach(t=>t.addEventListener('click',()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const id=t.dataset.tab; if(id==='count') renderCount(); if(id==='linear') renderLinear(); if(id==='shapes') renderShapes(); if(id==='consolidate') renderCon(); }));
+
+    // ---------- 1) STEPS & NEGATIVES ----------
+    function renderCount(){
+      const v=$('#view'); v.innerHTML='';
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="grid two">
+          <div>
+            <div class="muted">Thermometer (−10…+10). Slide & discuss rising/falling temps.</div>
+            <div class="row" style="align-items:flex-end">
+              <div class="thermo"><div class="bulb"></div><div id="mercury" class="mercury"></div></div>
+              <div>
+                <input id="temp" type="range" min="-10" max="10" step="1" value="0" style="width:220px"/>
+                <div class="mono">Temp: <span id="tval">0</span>°C</div>
+              </div>
+            </div>
+            <div class="panel" id="line"></div>
+            <div class="section">
+              <div class="muted">Quick-fire: Choose a step, then predict the next term.</div>
+              <div class="row"><label>Step</label>
+                <select id="step">
+                  <option value="1">+1/−1</option>
+                  <option value="2">+2/−2</option>
+                  <option value="3">+3/−3</option>
+                  <option value="5">+5/−5</option>
+                  <option value="0.5">±0.5</option>
+                </select>
+                <button id="q" class="primary">New Quick Question</button>
+              </div>
+              <div class="result" id="qbox"></div>
+            </div>
+          </div>
+          <div>
+            <div class="muted">Design a Temperature Story</div>
+            <div class="panel">
+              <div class="row"><label>Start °C</label><input id="sT" type="number" value="3" style="width:100px"/> <label>End °C</label><input id="eT" type="number" value="-2" style="width:100px"/></div>
+              <div class="row"><label>Step</label><select id="sS"><option>1</option><option>2</option><option>3</option><option>5</option><option>0.5</option></select> <button id="build" class="primary">Build Story</button></div>
+              <div id="story" class="result"></div>
+            </div>
+            <div class="panel muted">Eco: how animals/plants adapt to temperature changes · Islamic: Allah’s balance in seasons.</div>
+          </div>
+        </div>`;
+      v.appendChild(ui);
+      // thermometer
+      const slider=$('#temp'), tv=$('#tval'), merc=$('#mercury'); const upd=()=>{ const val=Number(slider.value); tv.textContent=val; const h=Math.max(0,(val+10)/20*180); merc.style.height=h+'px'; }; slider.oninput=upd; upd();
+      // line
+      const line=$('#line'); const drawLine=()=>{ line.innerHTML='<div class="numline"></div>'; const nl=line.firstChild; for(let n=-10;n<=10;n++){ const d=document.createElement('div'); d.className='tick'+(n===0?' zero':''); d.textContent=n; nl.appendChild(d);} }; drawLine();
+      // quick question
+      $('#q').onclick=()=>{ const step=parseFloat($('#step').value)||1; const base=Math.floor(Math.random()*11)-5; const seq=[base, +(base+step).toFixed(2), +(base+2*step).toFixed(2), +(base+3*step).toFixed(2)]; const ans=seq[3]; const id='ans_'+Math.random().toString(36).slice(2,7); $('#qbox').innerHTML=`Sequence: <span class="mono">${seq[0]}, ${seq[1]}, ${seq[2]}, __</span> <input id="${id}" style="width:90px"/> <button class="primary" id="chk">Check</button>`; $('#chk').onclick=()=>{ const got=parseFloat($('#'+id).value); if(Math.abs(got-ans)<1e-9){ add(4); $('#qbox').innerHTML='<span class="ok">Correct!</span>'; } else { add(0); $('#qbox').innerHTML='<span class="err">Answer: '+ans+'</span>'; } }; };
+      // story builder
+      $('#build').onclick=()=>{ const s=parseFloat($('#sT').value), e=parseFloat($('#eT').value), st=parseFloat($('#sS').value); if(!st){ $('#story').textContent='Choose a step size.'; return; } const diff=+(e-s).toFixed(2); const steps=+(diff/st).toFixed(2); const dir=steps>0? 'up' : 'down'; const total=Math.round(Math.abs(steps)); const valid = Math.abs(diff%st) < 1e-9; const seq=[s]; if(valid){ for(let i=1;i<=total;i++){ seq.push(+(s+i*st*(diff>0?1:-1)).toFixed(2)); } add(3); $('#story').innerHTML=`Penguin walks from ${s}°C to ${e}°C by ${st}-steps (${dir}). Steps needed: <b>${total}</b>.<br><div class="mono">${seq.join(' → ')}</div>`; } else { add(0); $('#story').innerHTML='<span class="err">That end point is not reachable in equal '+st+' steps from '+s+'. Try another step.</span>'; }
+      };
+    }
+
+    // ---------- 2) LINEAR SEQUENCES (nth term) ----------
+    function renderLinear(){
+      const v=$('#view'); v.innerHTML='';
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="grid two">
+          <div>
+            <div class="muted">Find the rule, missing terms, and nth term</div>
+            <div class="panel" id="seq"></div>
+            <div class="row" style="margin-top:6px">
+              <button class="primary" id="new">New Sequence</button>
+              <button class="primary" id="miss">Fill Missing</button>
+            </div>
+            <div class="result" id="out"></div>
+            <div class="section">
+              <div class="muted">nth-term tool</div>
+              <div class="row">a₁=<input id="a1" type="number" style="width:110px" value="3"/> step d=<input id="d" type="number" style="width:110px" value="4"/> n=<input id="n" type="number" style="width:110px" value="7"/> <button id="calc" class="primary">Calculate</button></div>
+              <div class="result" id="nth"></div>
+            </div>
+          </div>
+          <div>
+            <div class="muted">Eco Sequence Challenge</div>
+            <div class="panel">
+              <div>Example context: a tree gains 5 leaves daily. Predict leaves after 7 days.</div>
+              <div class="row" style="margin-top:6px"><label>Start</label><input id="ecoStart" type="number" value="10" style="width:110px"/> <label>Change/day</label><input id="ecoStep" type="number" value="5" style="width:110px"/> <label>Days</label><input id="ecoDays" type="number" value="7" style="width:110px"/> <button id="ecoGo" class="primary">Predict</button></div>
+              <div class="result" id="ecoOut"></div>
+              <div class="panel muted">Islamic link: Allah’s creation follows perfect order (Surah Al‑Mulk 67:3–4). Eco: growth cycles.</div>
+            </div>
+          </div>
+        </div>`;
+      v.appendChild(ui);
+      function makeSeq(){ const a1=1+Math.floor(Math.random()*9); const d= [-7,-5,-3,-2,2,3,4,5,6][Math.floor(Math.random()*9)]; const seq=[a1,a1+d,a1+2*d,a1+3*d,a1+4*d]; return {a1,d,seq}; }
+      let cur=makeSeq(); const draw=()=>{ $('#seq').innerHTML=`<div class="mono big">${cur.seq.join(', ')}, …</div><div class="muted">Rule: add ${cur.d>0? '+'+cur.d: cur.d} each step</div>`; $('#out').textContent=''; }; draw();
+      $('#new').onclick=()=>{ cur=makeSeq(); draw(); };
+      $('#miss').onclick=()=>{ // hide one interior term
+        const idx=1+Math.floor(Math.random()*3); const shown=cur.seq.map((v,i)=> i===idx? '__' : v); const id='m_'+Math.random().toString(36).slice(2,6); $('#out').innerHTML=`Fill missing: <span class="mono">${shown.join(', ')}</span> <input id="${id}" style="width:110px"/> <button id="chk" class="primary">Check</button>`; $('#chk').onclick=()=>{ const got=parseFloat($('#'+id).value); const want=cur.seq[idx]; if(Math.abs(got-want)<1e-9){ add(5); $('#out').innerHTML='<span class="ok">Correct!</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Answer: '+want+'</span>'; } };
+      };
+      $('#calc').onclick=()=>{ const a1=parseFloat($('#a1').value), d=parseFloat($('#d').value), n=parseInt($('#n').value); const an = a1 + (n-1)*d; add(3); $('#nth').innerHTML=`<div class="mono">aₙ = a₁ + (n−1)d = ${a1} + (${n}−1)×${d} = <b>${an}</b></div>`; };
+      $('#ecoGo').onclick=()=>{ const s=parseFloat($('#ecoStart').value), step=parseFloat($('#ecoStep').value), days=parseInt($('#ecoDays').value); const an = s + (days-1)*step; add(3); $('#ecoOut').innerHTML=`After ${days} days: <b>${an}</b>. Sequence: <span class="mono">${Array.from({length:Math.min(days,8)},(_,i)=>s+i*step).join(', ')}${days>8?', …':''}</span>`; };
+    }
+
+    // ---------- 3) SQUARE & TRIANGULAR ----------
+    function renderShapes(){
+      const v=$('#view'); v.innerHTML='';
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="grid two">
+          <div>
+            <div class="muted">Build square numbers on a 10×10 board (1²…10²)</div>
+            <div class="panel"><div id="board" class="board"></div></div>
+            <div class="row" style="margin-top:6px"><label>n</label><input id="nSq" type="number" value="4" min="1" max="10" style="width:120px"/> <button id="showSq" class="primary">Show n²</button> <button id="clearSq" class="warn">Clear</button></div>
+            <div class="result" id="sqOut"></div>
+          </div>
+          <div>
+            <div class="muted">Build triangular numbers (Tₙ = n(n+1)/2)</div>
+            <div class="panel" id="tri"></div>
+            <div class="row" style="margin-top:6px"><label>n</label><input id="nTr" type="number" value="5" min="1" max="15" style="width:120px"/> <button id="showTr" class="primary">Show Tₙ</button></div>
+            <div class="result" id="trOut"></div>
+            <div class="panel muted">Eco: honeycomb symmetry, petals & phyllotaxis—divine geometry in nature.</div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="muted">Spot the pattern</div>
+          <div class="panel" id="diffs"></div>
+          <div class="row" style="margin-top:6px"><button id="genSet" class="primary">New Square & Triangular Sets</button> <button id="check" class="primary">Check Differences</button></div>
+          <div class="result" id="out"></div>
+        </div>`;
+      v.appendChild(ui);
+      // square board
+      const board=$('#board'); function drawBoard(){ board.innerHTML=''; for(let i=0;i<100;i++){ const c=document.createElement('div'); c.className='cell'; board.appendChild(c);} } drawBoard();
+      function showSquare(){ const n=Math.max(1,Math.min(10,parseInt($('#nSq').value))); const cells=$$('#board .cell'); cells.forEach(c=>c.innerHTML=''); for(let r=0;r<n;r++){ for(let c=0;c<n;c++){ const idx=r*10+c; if(idx<cells.length){ cells[idx].innerHTML='<span class="dot"></span>'; } } } $('#sqOut').innerHTML=`<span class="mono">n² = ${n*n}</span>`; add(2); }
+      $('#showSq').onclick=showSquare; $('#clearSq').onclick=()=>{ $$('#board .cell').forEach(c=>c.innerHTML=''); $('#sqOut').textContent=''; };
+      // triangular dots
+      function showTri(){ const n=Math.max(1,Math.min(15,parseInt($('#nTr').value))); const box=$('#tri'); box.innerHTML=''; for(let r=1;r<=n;r++){ const row=document.createElement('div'); for(let i=0;i<r;i++){ row.innerHTML+='<span class="dot"></span>'; } box.appendChild(row); } const T=n*(n+1)/2; $('#trOut').innerHTML=`<span class="mono">Tₙ = n(n+1)/2 = ${T}</span>`; add(2); }
+      $('#showTr').onclick=showTri; showSquare(); showTri();
+      // pattern of differences
+      let sets=null; function newSets(){ const n1=1+Math.floor(Math.random()*8); const sq=[...Array(5)].map((_,i)=> (n1+i)**2 ); const n2=1+Math.floor(Math.random()*8); const tr=[...Array(5)].map((_,i)=> ((n2+i)*(n2+i+1))/2 ); sets={sq,tr}; $('#diffs').innerHTML=`Squares: <span class="mono">${sq.join(', ')}</span><br>Triangular: <span class="mono">${tr.join(', ')}</span><br><div class="muted">Enter the first three differences (between successive terms) for each set.</div>
+        <div class="row" style="margin-top:6px">Δ squares: <input id="ds1" style="width:80px"/> <input id="ds2" style="width:80px"/> <input id="ds3" style="width:80px"/></div>
+        <div class="row" style="margin-top:6px">Δ triangular: <input id="dt1" style="width:80px"/> <input id="dt2" style="width:80px"/> <input id="dt3" style="width:80px"/></div>`; $('#out').textContent=''; }
+      function diffs(arr){ const d=[]; for(let i=1;i<arr.length;i++) d.push(arr[i]-arr[i-1]); return d; }
+      newSets(); $('#genSet').onclick=newSets; $('#check').onclick=()=>{ const ds=diffs(sets.sq), dt=diffs(sets.tr); const gS=[Number($('#ds1').value),Number($('#ds2').value),Number($('#ds3').value)]; const gT=[Number($('#dt1').value),Number($('#dt2').value),Number($('#dt3').value)]; const okS = gS.every((v,i)=>v===ds[i]); const okT = gT.every((v,i)=>v===dt[i]); if(okS&&okT){ add(6); $('#out').innerHTML='<span class="ok">Yes! Square differences increase by 2; triangular differences are constant.</span>'; } else { add(0); $('#out').innerHTML=`<span class="err">Try again.</span> (Squares Δ: <span class="mono">${ds.slice(0,3).join(', ')}</span>; Triangular Δ: <span class="mono">${dt.slice(0,3).join(', ')}</span>)`; }
+      };
+    }
+
+    // ---------- 4) CONSOLIDATION ----------
+    function renderCon(){
+      const v=$('#view'); v.innerHTML='';
+      const ui=document.createElement('div');
+      ui.innerHTML=`
+        <div class="row"><button id="new" class="primary">Nature's Number Relay — New Set</button> <button id="check" class="primary">Check Answers</button> <button id="hint" class="warn">Hints</button></div>
+        <div id="qs" class="grid three" style="margin-top:8px"></div>
+        <div class="result" id="out"></div>
+        <div class="panel muted">Reflection: How do these patterns show Allah’s balance in nature?</div>`;
+      v.appendChild(ui);
+      function qSteps(){ const step=[-5,-3,-2,-1,1,2,3,5,0.5,-0.5][Math.floor(Math.random()*10)]; const s=Math.floor(Math.random()*11)-5; const seq=[s, +(s+step).toFixed(2), +(s+2*step).toFixed(2)]; return {t:`Next term (${step}): ${seq.join(', ')}, __`, a:String(+(s+3*step).toFixed(2))}; }
+      function qLinear(){ const a1=1+Math.floor(Math.random()*9), d=[-4,-3,-2,2,3,4,5][Math.floor(Math.random()*7)]; const n=1+Math.floor(Math.random()*8); const an=a1+(n-1)*d; return {t:`a₁=${a1}, d=${d}, n=${n} → aₙ = ?`, a:String(an)}; }
+      function qShape(){ const type=Math.random()<0.5?'sq':'tr'; if(type==='sq'){ const n=1+Math.floor(Math.random()*10); return {t:`n² for n=${n}`, a:String(n*n)}; } else { const n=1+Math.floor(Math.random()*12); return {t:`Tₙ for n=${n} (n(n+1)/2)`, a:String(n*(n+1)/2)}; } }
+      let set=[]; function gen(){ set=[qSteps(), qLinear(), qShape(), qSteps(), qLinear(), qShape(), qSteps(), qLinear(), qShape()]; draw(); $('#out').textContent=''; }
+      function draw(){ const Q=$('#qs'); Q.innerHTML=''; set.forEach((q,i)=>{ const card=document.createElement('div'); card.className='panel'; card.innerHTML=`<div class="badge">Q${i+1}</div><div>${q.t}</div><input data-i="${i}" placeholder="Answer" style="width:140px"/>`; Q.appendChild(card); }); }
+      gen(); $('#new').onclick=gen; $('#hint').onclick=()=>$('#out').innerHTML='Hints: keep equal steps; aₙ=a₁+(n−1)d; n²; Tₙ=n(n+1)/2'; $('#check').onclick=()=>{ let ok=0; $$('#qs input').forEach((inp,i)=>{ const good = (String(inp.value).trim()===set[i].a); if(good){ ok++; inp.style.borderColor='#14532d'; } else { inp.style.borderColor='#6b1c1c'; } }); if(ok===set.length){ add(10); $('#out').innerHTML='<span class="ok">Excellent — full marks!</span>'; } else { add(0); $('#out').innerHTML='<span class="err">Correct:</span> '+ok+' / '+set.length+' · Aim for 7+/10.'; }
+      };
+    }
+
+    // boot
+    renderCount();
+  </script>
+</body>
+</html>
